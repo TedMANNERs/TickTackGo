@@ -1,1 +1,1 @@
-# TickTackGo
+# Rock Paper Scissor
