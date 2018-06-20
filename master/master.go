@@ -53,6 +53,7 @@ func getGames(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("500 - Internal Server Error"))
 			return
 		}
+		w.Header().Set("content-type", "application/json")
 		w.Write(encodedGames)
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -80,6 +81,8 @@ func getGame(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("500 - Internal Server Error"))
 			return
 		}
+
+		w.Header().Set("content-type", "application/json")
 		w.Write(encodedGame)
 
 	case http.MethodPost:
@@ -110,6 +113,8 @@ func getGame(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("500 - Internal Server Error"))
 			return
 		}
+
+		w.Header().Set("content-type", "application/json")
 		w.Write(encodedResult)
 
 	default:
