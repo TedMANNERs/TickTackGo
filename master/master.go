@@ -4,19 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"strings"
-	"time"
 )
 
 var games = make(map[string]Game)
-
-const ROCK = "Rock"
-const PAPER = "Paper"
-const SCISSORS = "Scissors"
-
-var availableSymbols = []string{ROCK, PAPER, SCISSORS}
 
 func createGame(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -108,34 +100,7 @@ func getGame(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		rand.Seed(time.Now().Unix())
-		random := rand.Intn(2)
-		masterSymbol := availableSymbols[random]
-		historyEntry := GameHistoryEntry{MasterSymbol: masterSymbol, SlaveSymbol: slaveSymbol.Symbol}
-		game.Result.GameHistory = append(game.Result.GameHistory, historyEntry)
-		switch slaveSymbol.Symbol {
-		case ROCK:
-			if masterSymbol == PAPER {
-				game.Result.MasterScore++
-			}
-			if masterSymbol == SCISSORS {
-				game.Result.SlaveScore++
-			}
-		case PAPER:
-			if masterSymbol == SCISSORS {
-				game.Result.MasterScore++
-			}
-			if masterSymbol == ROCK {
-				game.Result.SlaveScore++
-			}
-		case SCISSORS:
-			if masterSymbol == ROCK {
-				game.Result.MasterScore++
-			}
-			if masterSymbol == PAPER {
-				game.Result.SlaveScore++
-			}
-		}
+		game.Result = GetUpdatedResult(game.Result, slaveSymbol)
 		games[boardId] = game
 		resultRef := &game.Result
 		encodedResult, err := json.Marshal(resultRef)
