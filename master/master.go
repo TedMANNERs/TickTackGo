@@ -10,7 +10,8 @@ import (
 )
 
 var games = make(map[string]Game)
-var azureUrl = "https://techweek2018functionapp.azurewebsites.net/api/scores"
+var azureScoresUrl = "/scores"
+var azureUrl = ""
 
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
@@ -175,10 +176,13 @@ func updateAzure(game Game) {
 	defer resp.Body.Close()
 }
 
-func Start() {
+func Start(azureApiUrl string) {
+	azureUrl = azureApiUrl + azureScoresUrl
+	fmt.Println("Using Azure url \"" + azureUrl + "\"")
 	fmt.Println("Starting master...")
 	http.HandleFunc("/registry", createGame)
 	http.HandleFunc("/games", getGames)
 	http.HandleFunc("/games/", getGame)
 	http.ListenAndServe(":8080", nil)
+	fmt.Println("Master started")
 }
