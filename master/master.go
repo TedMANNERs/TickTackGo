@@ -1,6 +1,7 @@
 package master
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,11 @@ import (
 )
 
 var games = make(map[string]Game)
+var azureUrl = "https://techweek2018functionapp.azurewebsites.net/api/scores"
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
 
 func createGame(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -43,6 +49,7 @@ func createGame(w http.ResponseWriter, r *http.Request) {
 }
 
 func getGames(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	switch r.Method {
 	case http.MethodGet:
 		gamesRef := &games
@@ -117,10 +124,33 @@ func getGame(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json")
 		w.Write(encodedResult)
 
+		go updateAzure(game)
+
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Write([]byte("405 - Method not allowed"))
 	}
+}
+
+func updateAzure(game Game) {
+	resultJson := []byte(fmt.Sprintf(`{"masterScore":%d, "slaveScore":%d}`, game.Result.MasterScore, game.Result.SlaveScore))
+	r, err := http.NewRequest(http.MethodPut, azureUrl, bytes.NewBuffer(resultJson))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	q := r.URL.Query()
+	q.Add("id", game.BoardID)
+	r.URL.RawQuery = q.Encode()
+	r.Header.Set("content-type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
 }
 
 func Start() {
