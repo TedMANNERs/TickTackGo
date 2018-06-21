@@ -146,19 +146,21 @@ func createPostResult(gameResult GameResult) PostResult {
 }
 
 func updateAzure(game Game) {
-	resultJson := []byte(fmt.Sprintf(`{"masterScore":%d, "slaveScore":%d}`, game.Result.MasterScore, game.Result.SlaveScore))
-	r, err := http.NewRequest(http.MethodPut, azureUrl, bytes.NewBuffer(resultJson))
+	resultString := fmt.Sprintf(`{"masterScore":%d, "slaveScore":%d}`, game.Result.MasterScore, game.Result.SlaveScore)
+	fmt.Println("Update Azure: " + resultString)
+	resultJson := []byte(resultString)
+	req, err := http.NewRequest(http.MethodPut, azureUrl, bytes.NewBuffer(resultJson))
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	q := r.URL.Query()
-	q.Add("id", game.BoardID)
-	r.URL.RawQuery = q.Encode()
-	r.Header.Set("content-type", "application/json")
+	query := req.URL.Query()
+	query.Add("id", game.BoardID)
+	req.URL.RawQuery = query.Encode()
+	req.Header.Set("content-type", "application/json")
 
 	client := &http.Client{}
-	resp, err := client.Do(r)
+	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -171,5 +173,5 @@ func Start() {
 	http.HandleFunc("/registry", createGame)
 	http.HandleFunc("/games", getGames)
 	http.HandleFunc("/games/", getGame)
-	http.ListenAndServe("localhost:8080", nil)
+	http.ListenAndServe(":8080", nil)
 }
