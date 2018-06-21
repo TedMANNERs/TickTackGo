@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 )
@@ -12,12 +13,15 @@ import (
 var games = make(map[string]Game)
 var azureScoresUrl = "/scores"
 var azureUrl = ""
+var techweekNetwork = "192.168.201"
+var port = "8080"
 
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
 func createGame(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.Method + ":" + r.URL.Path)
 	switch r.Method {
 	case http.MethodPost:
 		body, err := ioutil.ReadAll(r.Body)
@@ -51,6 +55,7 @@ func createGame(w http.ResponseWriter, r *http.Request) {
 }
 
 func getGames(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.Method + ":" + r.URL.Path)
 	enableCors(&w)
 	switch r.Method {
 	case http.MethodGet:
@@ -70,7 +75,8 @@ func getGames(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getGame(w http.ResponseWriter, r *http.Request) {
+func handleGame(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.Method + ":" + r.URL.Path)
 	p := strings.Split(r.URL.Path, "/")
 	boardId := p[len(p)-1]
 	game, ok := games[boardId]
@@ -148,7 +154,8 @@ func createPostResult(game Game) PostResult {
 
 func updateAzure(game Game) {
 	resultString := fmt.Sprintf(`{"masterScore":%d, "slaveScore":%d}`, game.MasterScore, game.SlaveScore)
-	fmt.Println("Update Azure: " + resultString)
+	fmt.Println("Send " + http.MethodPut)
+	fmt.Println("Request body: " + resultString)
 	resultJson := []byte(resultString)
 	req, err := http.NewRequest(http.MethodPut, azureUrl, bytes.NewBuffer(resultJson))
 	if err != nil {
@@ -176,13 +183,42 @@ func updateAzure(game Game) {
 	defer resp.Body.Close()
 }
 
+func getIP() string {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		panic(err)
+	}
+	for _, i := range interfaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			panic(err)
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+
+			ipString := ip.String()
+			if strings.Contains(ipString, techweekNetwork) {
+				return ipString
+			}
+		}
+	}
+	panic("No network adapter found with assigned IP that matches " + techweekNetwork)
+}
+
 func Start(azureApiUrl string) {
 	azureUrl = azureApiUrl + azureScoresUrl
 	fmt.Println("Using Azure url \"" + azureUrl + "\"")
-	fmt.Println("Starting master...")
+	ip := getIP()
+
+	fmt.Println("Master is running at " + ip + ":" + port)
 	http.HandleFunc("/registry", createGame)
 	http.HandleFunc("/games", getGames)
-	http.HandleFunc("/games/", getGame)
-	http.ListenAndServe(":8080", nil)
-	fmt.Println("Master started")
+	http.HandleFunc("/games/", handleGame)
+	http.ListenAndServe(":"+port, nil)
 }
