@@ -16,6 +16,13 @@ type Game struct {
 	Result  GameResult
 }
 
+type PostResult struct {
+	MasterScore  int
+	SlaveScore   int
+	MasterSymbol string
+	SlaveSymbol  string
+}
+
 type GameResult struct {
 	MasterScore int
 	SlaveScore  int

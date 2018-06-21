@@ -113,7 +113,9 @@ func getGame(w http.ResponseWriter, r *http.Request) {
 
 		game.Result = GetUpdatedResult(game.Result, slaveSymbol)
 		games[boardId] = game
-		resultRef := &game.Result
+
+		postResult := createPostResult(game.Result)
+		resultRef := &postResult
 		encodedResult, err := json.Marshal(resultRef)
 		if err != nil {
 			fmt.Println(err)
@@ -131,6 +133,16 @@ func getGame(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Write([]byte("405 - Method not allowed"))
 	}
+}
+
+func createPostResult(gameResult GameResult) PostResult {
+	lastHistoryEntry := gameResult.GameHistory[len(gameResult.GameHistory)-1]
+	postResult := PostResult{
+		MasterScore:  gameResult.MasterScore,
+		SlaveScore:   gameResult.SlaveScore,
+		MasterSymbol: lastHistoryEntry.MasterSymbol,
+		SlaveSymbol:  lastHistoryEntry.SlaveSymbol}
+	return postResult
 }
 
 func updateAzure(game Game) {
