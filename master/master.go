@@ -165,6 +165,13 @@ func updateAzure(game Game) {
 		fmt.Println(err)
 		return
 	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(string(body))
 	defer resp.Body.Close()
 }
 
