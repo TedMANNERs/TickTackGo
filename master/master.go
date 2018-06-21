@@ -39,8 +39,9 @@ func createGame(w http.ResponseWriter, r *http.Request) {
 		game.Result.GameHistory = []GameHistoryEntry{}
 		games[game.BoardID] = game
 		fmt.Println(game.BoardID + " registered")
+		w.Header().Set("content-location", "http://"+r.Host+"/games/"+game.BoardID)
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(r.Host + "/games/" + game.BoardID))
+		w.Write([]byte("Game created"))
 
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
