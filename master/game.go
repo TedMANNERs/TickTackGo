@@ -12,8 +12,10 @@ const SCISSORS = "Scissors"
 var availableSymbols = []string{ROCK, PAPER, SCISSORS}
 
 type Game struct {
-	BoardID string
-	Result  GameResult
+	BoardID     string
+	MasterScore int
+	SlaveScore  int
+	GameHistory []GameHistoryEntry
 }
 
 type PostResult struct {
@@ -21,12 +23,6 @@ type PostResult struct {
 	SlaveScore   int
 	MasterSymbol string
 	SlaveSymbol  string
-}
-
-type GameResult struct {
-	MasterScore int
-	SlaveScore  int
-	GameHistory []GameHistoryEntry
 }
 
 type GameHistoryEntry struct {
@@ -38,34 +34,34 @@ type GameSymbol struct {
 	Symbol string
 }
 
-func GetUpdatedResult(result GameResult, slaveSymbol GameSymbol) GameResult {
+func GetUpdatedResult(game Game, slaveSymbol GameSymbol) Game {
 	rand.Seed(time.Now().Unix())
 	random := rand.Intn(3)
 	masterSymbol := availableSymbols[random]
 	historyEntry := GameHistoryEntry{MasterSymbol: masterSymbol, SlaveSymbol: slaveSymbol.Symbol}
-	result.GameHistory = append(result.GameHistory, historyEntry)
+	game.GameHistory = append(game.GameHistory, historyEntry)
 	switch slaveSymbol.Symbol {
 	case ROCK:
 		if masterSymbol == PAPER {
-			result.MasterScore++
+			game.MasterScore++
 		}
 		if masterSymbol == SCISSORS {
-			result.SlaveScore++
+			game.SlaveScore++
 		}
 	case PAPER:
 		if masterSymbol == SCISSORS {
-			result.MasterScore++
+			game.MasterScore++
 		}
 		if masterSymbol == ROCK {
-			result.SlaveScore++
+			game.SlaveScore++
 		}
 	case SCISSORS:
 		if masterSymbol == ROCK {
-			result.MasterScore++
+			game.MasterScore++
 		}
 		if masterSymbol == PAPER {
-			result.SlaveScore++
+			game.SlaveScore++
 		}
 	}
-	return result
+	return game
 }

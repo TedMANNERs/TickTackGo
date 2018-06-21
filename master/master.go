@@ -36,7 +36,7 @@ func createGame(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		game.Result.GameHistory = []GameHistoryEntry{}
+		game.GameHistory = []GameHistoryEntry{}
 		games[game.BoardID] = game
 		fmt.Println(game.BoardID + " registered")
 		w.Header().Set("content-location", "http://"+r.Host+"/games/"+game.BoardID)
@@ -111,10 +111,10 @@ func getGame(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		game.Result = GetUpdatedResult(game.Result, slaveSymbol)
+		game = GetUpdatedResult(game, slaveSymbol)
 		games[boardId] = game
 
-		postResult := createPostResult(game.Result)
+		postResult := createPostResult(game)
 		resultRef := &postResult
 		encodedResult, err := json.Marshal(resultRef)
 		if err != nil {
@@ -135,18 +135,18 @@ func getGame(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createPostResult(gameResult GameResult) PostResult {
-	lastHistoryEntry := gameResult.GameHistory[len(gameResult.GameHistory)-1]
+func createPostResult(game Game) PostResult {
+	lastHistoryEntry := game.GameHistory[len(game.GameHistory)-1]
 	postResult := PostResult{
-		MasterScore:  gameResult.MasterScore,
-		SlaveScore:   gameResult.SlaveScore,
+		MasterScore:  game.MasterScore,
+		SlaveScore:   game.SlaveScore,
 		MasterSymbol: lastHistoryEntry.MasterSymbol,
 		SlaveSymbol:  lastHistoryEntry.SlaveSymbol}
 	return postResult
 }
 
 func updateAzure(game Game) {
-	resultString := fmt.Sprintf(`{"masterScore":%d, "slaveScore":%d}`, game.Result.MasterScore, game.Result.SlaveScore)
+	resultString := fmt.Sprintf(`{"masterScore":%d, "slaveScore":%d}`, game.MasterScore, game.SlaveScore)
 	fmt.Println("Update Azure: " + resultString)
 	resultJson := []byte(resultString)
 	req, err := http.NewRequest(http.MethodPut, azureUrl, bytes.NewBuffer(resultJson))
