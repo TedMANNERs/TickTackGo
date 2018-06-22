@@ -11,10 +11,9 @@ import (
 )
 
 var games = make(map[string]Game)
-var azureScoresUrl = "/scores"
-var azureUrl = ""
+var azureScoresURL = "/scores"
+var azureURL = ""
 var techweekNetwork = "192.168.201"
-var port = "8080"
 
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
@@ -157,7 +156,7 @@ func updateAzure(game Game) {
 	fmt.Println("Send " + http.MethodPut)
 	fmt.Println("Request body: " + resultString)
 	resultJson := []byte(resultString)
-	req, err := http.NewRequest(http.MethodPut, azureUrl, bytes.NewBuffer(resultJson))
+	req, err := http.NewRequest(http.MethodPut, azureURL, bytes.NewBuffer(resultJson))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -211,14 +210,14 @@ func getIP() string {
 	panic("No network adapter found with assigned IP that matches " + techweekNetwork)
 }
 
-func Start(azureApiUrl string) {
-	azureUrl = azureApiUrl + azureScoresUrl
-	fmt.Println("Using Azure url \"" + azureUrl + "\"")
+func Start(azureAPIURL string, port int, networkMatchAddr string) {
+	azureURL = azureAPIURL + azureScoresURL
+	fmt.Println("Using Azure url \"" + azureURL + "\"")
 	ip := getIP()
 
-	fmt.Println("Master is running at " + ip + ":" + port)
+	fmt.Println(fmt.Sprintf("Master is running at %s:%d", ip, port))
 	http.HandleFunc("/registry", createGame)
 	http.HandleFunc("/games", getGames)
 	http.HandleFunc("/games/", handleGame)
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
